@@ -1,14 +1,11 @@
 package com.craftinginterpreters.lox;
 
 import java.util.List;
-import java.util.HashMap;
 import java.util.ArrayList;
-import java.util.Map;
 
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
   final Environment globals = new Environment();
-  private final Map<Expr, int[]> locals = new HashMap<>(); //challenge 4 ch 11
   private Environment environment = globals;
 
   Interpreter() {
@@ -50,18 +47,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
   @Override
   public Object visitVariableExpr(Expr.Variable expr) {
-    return lookUpVariable(expr.name, expr);
+    return enviornment.get(expr.name);
   }
-
-  private Object lookUpVariable(Token name, Expr expr) {
-    int[] location = locals.get(expr); //challenge 4 ch11
-    if (location != null) { //challenge 4 ch11
-      return environment.getAtIndex(location[0], location[1],); //challenge 4 ch11
-    } else {
-      return globals.get(name);
-    }
-  }
-
 
   private void checkNumberOperand(Token operator, Object operand) {
     if (operand instanceof Double) return;
@@ -113,10 +100,6 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
   private void execute(Stmt stmt) {
     stmt.accept(this);
-  }
-
-  void resolve(Expr expr, int depth) {
-    locals.put(expr, depth);
   }
 
   void executeBlock(List<Stmt> statements,
@@ -187,12 +170,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
   @Override
   public Object visitAssignExpr(Expr.Assign expr) {
     Object value = evaluate(expr.value);
-    Integer distance = locals.get(expr);
-    if (distance != null) {
-      environment.assignAt(distance, expr.name, value);
-    } else {
-      globals.assign(expr.name, value);
-    }
+    enviornment.assign(expr.name, value);
     return value;
   }
 
