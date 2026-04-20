@@ -27,19 +27,6 @@ class LoxClass implements LoxCallable {
     return null;
   }
 
-  java.util.List<LoxFunction> findMethodChain(String name) {  //challenge 2 chapter 13
-    java.util.ArrayList<LoxFunction> chain = new java.util.ArrayList<>();
-
-    for (LoxClass superclass : superclasses){
-      chain.addAll(superclass.findMethodChain(name));
-    }
-
-    LoxFunction here = methods.get(name);
-    if(here != null) chain.add(here);
-
-    return chain;
-  }
-
   @Override
   public String toString() {
     return name;
