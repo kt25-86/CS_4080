@@ -234,3 +234,15 @@ static class Class extends Stmt {
     builder.append(")");
     return builder.toString();
   }
+
+
+//TokenType.java addition (Challenge 2 ch 13):
+INNER
+
+//Scanner.jave addition (Challnege 2 ch 13):
+keywords.put("inner", INNER);
+
+//GenerateAst.jave addition (Challnege 2 ch 13):
+"Inner    : Token keyword",
+
+if (match(Inner)) return new Expr.Inner(previous());
