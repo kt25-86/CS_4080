@@ -22,6 +22,9 @@ typedef enum {
   //challenge 1 ch23
   TOKEN_CASE, TOKEN_DEFAULT, TOKEN_SWITCH,
 
+  //challenge 2 ch23
+  TOKEN_CONTINUE,
+
   TOKEN_ERROR, TOKEN_EOF
 } TokenType;
 
