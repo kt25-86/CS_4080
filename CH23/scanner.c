@@ -117,6 +117,7 @@ static Token identifier() {
 static TokenType identifierType() {
   switch (scanner.start[0]) {
     case 'a': return checkKeyword(1, 2, "nd", TOKEN_AND);
+    
     case 'c': //challenge 1 ch 23
         if (scanner.current - scanner.start > 1) {
           switch (scanner.start[1]){
@@ -125,6 +126,16 @@ static TokenType identifierType() {
           }
         }
         break;
+
+    case 'c': //challenge 2 ch 23
+        if (scanner.current - scanner.start > 1) {
+          switch (scanner.start[1]){
+            case 'l': return checkKeyword(2, 3, "ass", TOKEN_CLASS);
+            case 'o': return checkKeyword(2, 6, "ntinue", TOKEN_CONTINUE);
+          }
+        }
+        break;
+    
     case 'e': return checkKeyword(1, 3, "lse", TOKEN_ELSE);
     case 'f':
       if (scanner.current - scanner.start > 1) {
