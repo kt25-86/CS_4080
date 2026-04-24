@@ -53,7 +53,10 @@ typedef struct Compiler {
 
 Parser parser;
 Compiler* current = NULL;
-Chunk* compilingChunk;  
+Chunk* compilingChunk;
+
+int innermostLoopStart = -1;  //challenge 2 ch23
+int innermostLoopScopeDepth = 0;  //challenge 2 ch23
 
 static Chunk* currentChunk() {
   return compilingChunk;
@@ -204,6 +207,8 @@ static void statement();
 static void declaration();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
+
+static void continueStatement(); //challenge 2 ch23
 
 static void binary(bool canAssign) {
   TokenType operatorType = parser.previous.type;
@@ -446,6 +451,7 @@ ParseRule rules[] = {
   [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_CONTINUE]      = {NULL,     NULL,   PREC_NONE}; //challenge 2 ch23
 };
 
 static void expression() {
@@ -492,7 +498,14 @@ static void forStatement() {
     expressionStatement();
   }
 
-  int loopStart = currentChunk()->count;
+  //challenge 2 ch23
+  int surroundingLoopStart = innermostLoopStart;  //challenge 2 ch23
+  int surroundingLoopScopeDepth = innermostScopeDepth;  //challenge 2 ch23
+
+  innermostLoopStart = currentChunk()->count;  //challenge 2 ch23
+  innermostScopeDepth = current->scopeDepth;  //challenge 2 ch23
+
+  
   int exitJump = -1;
   if (!match(TOKEN_SEMICOLON)) {
     expression();
@@ -510,18 +523,21 @@ static void forStatement() {
     emitByte(OP_POP);
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
 
-    emitLoop(loopStart);
-    loopStart = incrementStart;
+    emitLoop(innermostLoopStart);  //challenge 2 ch23
+    innermostLoopStart = incrementStart;  //challenge 2 ch23
     patchJump(bodyJump);
   }
 
   statement();
-  emitLoop(loopStart);
-
+  emitLoop(innermostLoopStart);  //challenge 2 ch23
+  
   if (exitJump != -1) {
     patchJump(exitJump);
     emitByte(OP_POP); // Condition.
   }
+
+  innermostLoopStart = surroundingLoopStart;  //challenge 2 ch23
+  innermostLoopScopeDepth = surroundingLoopScopeDepth;  //challenge 2 ch23
   
   endScope();
 }
@@ -552,6 +568,13 @@ static void printStatement() {
 
 static void whileStatement() {
   int loopStart = currentChunk()->count;
+
+  int surroundingLoopStart = innermostLoopStart;  //challenge 2 ch23
+  int surroundingLoopScopeDepth = innermostScopeDepth;  //challenge 2 ch23
+
+  innermostLoopStart = loopStart;  //challenge 2 ch23
+  innermostScopeDepth = current->scopeDepth;  //challenge 2 ch23
+  
   consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
   expression();
   consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
@@ -563,6 +586,9 @@ static void whileStatement() {
 
   patchJump(exitJump);
   emitByte(OP_POP);
+
+  innermostLoopStart = surroundingLoopStart;  //challenge 2 ch23
+  innermostLoopScopeDepth = surroundingLoopScopeDepth;  //challenge 2 ch23
 }
 
 static void switchStatement(){  //challenge 1 ch 23
@@ -624,6 +650,20 @@ static void switchStatement(){  //challenge 1 ch 23
                
 }
 
+static void continueStatement() {
+  if (innermostLoopStart == -1){
+    error("Can't use 'continue' outside of a loop.");
+  }
+  consume(TOKEN_SEMICOLON, "Expect ';' after 'continue'.");
+
+  for (int i = current->localCount - 1; i >= 0 && current->local[i].depth > innermostLoopScopeDepth; i--) {
+    emitByte(OP_POP);
+  }
+
+  emitLoop(innermostLoopStart);
+}
+
+
 static void synchronize() {
   parser.panicMode = false;
 
@@ -638,6 +678,7 @@ static void synchronize() {
       case TOKEN_WHILE:
       case TOKEN_PRINT:
       case TOKEN_RETURN:
+      case TOKEN_CONTINUE; //challenge 2 ch23
         return;
 
       default:
@@ -664,11 +705,12 @@ static void statement() {
     forStatement();
   } else if (match(TOKEN_IF)) {
     ifStatement();
-  } else if (match(TOKEN_WHILE)) { //challenge 1 ch23
+  } else if (match(TOKEN_CONTINUE)) {   //challenge 2 ch23
+    continueStatement();
+  } else if (match(TOKEN_WHILE)) { 
     whileStatement();
-  } else if (match(TOKEN_SWITCH)) {
+  } else if (match(TOKEN_SWITCH)) {  //challenge 1 ch23
     switchStatement();
-  }
   } else if (match(TOKEN_LEFT_BRACE)) {
     beginScope();
     block();
