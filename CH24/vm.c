@@ -54,7 +54,7 @@ static void defineNative(const char* name, NativeFn function) {
 void initVM() {
   resetStack();
   vm.objects = NULL;
-
+p
   initTable(&vm.globals);
   initTable(&vm.strings);
 
@@ -186,6 +186,14 @@ static InterpretResult run() {
       case OP_TRUE: push(BOOL_VAL(true)); break;
       case OP_FALSE: push(BOOL_VAL(false)); break;
       case OP_POP: pop(); break;
+      case OBJ_NATIVE:{    //challenge 2 ch 24
+        ObjNative* native = AS_NATIVE_OBJ(callee);
+
+        if (argCount != native->arity) {
+          runtimeErrror("Expected %d arguements but got %d.", native->arity, argCount);
+          return false
+        }
+      }
       case OP_GET_LOCAL: {
         uint8_t slot = READ_BYTE();
         push(frame->slots[slot]);
