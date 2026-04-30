@@ -16,6 +16,52 @@ static Value clockNative(int argCount, Value* args) {
   return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
 }
 
+static bool sqrtNative(int argCount, Value* args, Value* result) { //challenge 3 ch 24
+  if (argCount != 1) {
+    runtimeError("sqrt() expects 1 argumnet.");
+    return false;
+  }
+
+  if (!IS_NUMBER(args[0])){
+    runtimeError("sqrt() argument must be a number.");
+    return false;
+  }
+
+  double x = AS_NUMBER(args[0]);
+  if (x < 0) {
+    runtimeError("sqrt() argument must be non-negative.");
+    return false;
+  }
+
+  *result = NUMBER_VAL(sqrt(x));
+  return true;
+}
+
+static bool typeNative(int argCount, Value args, Value* result){  //challnege 4 ch 24
+  if (argCount != 1){
+    runtimeError("typr() expects 1 argument.");
+    return false;
+  }
+
+  Value value = args[0];
+
+  if (IS_NUMBER(value)) {
+    *result = OBJ_VAL(copyString("number", 6));
+  } else if (IS_BOOL(value)) {
+    *result = OBJ_VAL(copyString("bool", 4));
+  } else if (IS_NIL(value)) {
+    *result = OBJ_VAL(copyString("nil", 3));
+  } else if (IS_STRING(value)) {
+    *result = OBJ_VAL(copyString("string", 6));
+  } else if (IS_FUNCTION(value)) {
+    *result = OBJ_VAL(copyString("function", 8));
+  } else if (IS_NATIVE(value)) {
+    *result = OBJ_VAL(copyString("native", 6));
+  } else {
+    *result = OBJ_VAL(copyString("unknown", 7));
+  }
+}
+
 static void resetStack() {
   vm.stackTop = vm.stack;
   vm.frameCount = 0;
@@ -59,6 +105,8 @@ p
   initTable(&vm.strings);
 
   defineNative("clock", clockNative);
+  defineNative("sqrt", sqrtNative); //challenge 3 ch 24
+  defineNative("type", typeNative); //challenge 4 ch 24
 }
 
 void freeVM() {
@@ -106,7 +154,17 @@ static bool callValue(Value callee, int argCount) {
       case OBJ_FUNCTION: 
         return call(AS_FUNCTION(callee), argCount);
       case OBJ_NATIVE: {
-        NativeFn native = AS_NATIVE(callee);
+        ObjNative* native = AS_NATIVE_OBJ(callee); //challenge 2 ch 24
+
+        if (argCount != native->arity) { //challenge 2 ch 24
+          runtimeError("Expected %d arguement but got %d.", native->arity, argCount);
+          return false;
+        }
+
+        if (!native(argCount, vm.stackTop - argCount, &result)) { //challenge 3 ch 24
+          return false;
+        }
+        
         Value result = native(argCount, vm.stackTop - argCount);
         vm.stackTop -= argCount + 1;
         push(result);
@@ -186,14 +244,6 @@ static InterpretResult run() {
       case OP_TRUE: push(BOOL_VAL(true)); break;
       case OP_FALSE: push(BOOL_VAL(false)); break;
       case OP_POP: pop(); break;
-      case OBJ_NATIVE:{    //challenge 2 ch 24
-        ObjNative* native = AS_NATIVE_OBJ(callee);
-
-        if (argCount != native->arity) {
-          runtimeErrror("Expected %d arguements but got %d.", native->arity, argCount);
-          return false
-        }
-      }
       case OP_GET_LOCAL: {
         uint8_t slot = READ_BYTE();
         push(frame->slots[slot]);
