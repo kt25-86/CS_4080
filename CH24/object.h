@@ -37,7 +37,7 @@ typedef struct {
 
 typedef Value (*NativeFn)(int argCount, Value* args);
 
-typedef bool (*NativeFn)(int argCount, Value* args); //challenge 2 ch 24
+typedef bool (*NativeFn)(int argCount, Value* args); //challenge 3 ch 24
 
 typedef struct {
   Obj obj;
