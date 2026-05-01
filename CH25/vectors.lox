@@ -1,0 +1,25 @@
+fun getX(x,y) {return x;}  //individual coordinate for x
+fun getY(x,y) {return y;}  //individual coordinate for y
+
+fun vector(x,y) {  //constructor
+  var vec = x * 1000000 + y;  //coordinates stored as one number 
+}
+
+fun vecX(vec) {return vec / 1000000;}    //returns to individual coordinate for x
+fun vecY(vec) {return vec - (vec/1000000) * 1000000;}    //returns to individual coordinate for y
+
+fun add(a,b) {    //adds individual coordinates of 2 vectors
+  return vector(vecX(a) + vecX(b), vecY(a) + vecY(b));
+}
+
+var a = vector(1, 2);   //example vector 1
+var b = vector(3, 4);   //example vector 2
+
+print vecX(a);
+print vecY(a);
+print vecX(b);
+print vecY(b);
+
+var c = add(a,b);      //add example vectors
+print vecX(c);
+print vecY(c);
