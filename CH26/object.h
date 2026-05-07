@@ -42,7 +42,7 @@ struct Obj {
 
   int refCount;     //challnege 3 ch26
 
-  bool isMarked;
+ // bool isMarked;
   struct Obj* next;
 };
 
