@@ -586,6 +586,24 @@ static void this_(bool canAssign) {
   variable(false);
 } // [this]
 
+
+static void inner_(bool canAssign) {        //challenge 3 ch 29
+  (void)canAssign;
+  if (currentClass == NULL || (current->type != TYPE_METHOD && current->type != TYPE_INITIALIZER)) {
+    error("Can't use 'inner' outside of a method.");
+    return;
+  }
+
+  consume(TOKEN_LEFT_PAREN, "Expect '(' after 'inner'.");
+  emitBytes(OP_GET_LOCAL, 0);
+  uint8_t argCount = arguementList();
+
+  ObjString* name = current->function->name;
+  uint8_t nameConst = makeConstant(OBJ_VAL(name));
+  emitBytes(OP_INNER, nameConst);
+  emitByte(argCount);
+}
+
 static void unary(bool canAssign) {
   TokenType operatorType = parser.previous.type;
 
